@@ -795,6 +795,7 @@ export default function App() {
                       ['calendar', '📅 Bookings Calendar'],
                       ['packages', '📦 Package Management'],
                       ['tasks', '🌐 Global Tasks'],
+                      ['users', `👤 Registered Users (${adminUsers.length})`],
                     ].map(([section, label]) => (
                       <button
                         type="button"
@@ -939,7 +940,7 @@ export default function App() {
                   <div className="d-flex gap-2 flex-wrap">
                     <button 
                       className="btn btn-sm btn-dark fw-bold"
-                      onClick={() => setShowUsersModal(true)}
+                      onClick={() => setAdminSection('users')}
                     >
                       📋 View Registered Users Directory ({adminUsers.length})
                     </button>
@@ -1191,7 +1192,7 @@ export default function App() {
                   <h4 className="m-0 fs-5">👤 User Profiles & Task Overview</h4>
                   <button 
                     className="btn btn-sm btn-outline-primary fw-semibold"
-                    onClick={() => setShowUsersModal(true)}
+                    onClick={() => setAdminSection('users')}
                   >
                     🔍 Open Full Directory Table
                   </button>
@@ -1259,6 +1260,44 @@ export default function App() {
                   })}
                 </div>
                   </>
+                )}
+
+                {adminSection === 'users' && (
+                  <div className="card border-primary">
+                    <div className="card-header bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                      <div>
+                        <h4 className="m-0 fs-5 text-white">👤 Registered Users Directory</h4>
+                        <small className="text-white-50">Manage advertisers, clients, and administrator accounts</small>
+                      </div>
+                      <button type="button" className="btn btn-light btn-sm fw-semibold" onClick={() => setShowUsersModal(true)}>Manage Users</button>
+                    </div>
+                    <div className="card-body p-0">
+                      <div className="table-responsive">
+                        <table className="table table-hover align-middle mb-0">
+                          <thead className="table-light">
+                            <tr><th>User</th><th>Email</th><th>Contact</th><th>Role</th><th className="text-center">Bookings</th><th className="text-end">Actions</th></tr>
+                          </thead>
+                          <tbody>
+                            {adminUsers.map(user => {
+                              const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || 'N/A'
+                              const bookingCount = allTodos.filter(todo => todo.user_id === user.id).length
+                              return (
+                                <tr key={user.id}>
+                                  <td><div className="fw-bold">{fullName}</div><small className="text-muted">{user.address || 'No address provided'}</small></td>
+                                  <td>{user.email}</td>
+                                  <td>{user.contact_number || '—'}</td>
+                                  <td><span className={`badge ${user.role === 'admin' ? 'bg-danger' : 'bg-primary'}`}>{user.role}</span></td>
+                                  <td className="text-center"><span className="badge bg-info text-dark">{bookingCount}</span></td>
+                                  <td className="text-end"><button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setShowUsersModal(true)}>View / Edit</button></td>
+                                </tr>
+                              )
+                            })}
+                            {adminUsers.length === 0 && <tr><td colSpan="6" className="text-center text-muted py-4">No registered users found.</td></tr>}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 

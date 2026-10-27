@@ -34,6 +34,7 @@ button, input, select, textarea { font: inherit; }
 .app-main .card { border: 1px solid #e4ecf5 !important; border-radius: 11px; box-shadow: 0 5px 18px rgba(25, 61, 105, .06) !important; background: #fff; }
 .app-main .card-header { border-radius: 10px 10px 0 0 !important; border-bottom-color: #e7eef6; }
 .app-main h2, .app-main h3, .app-main h4, .app-main h5, .app-main h6 { color: #142b4a; font-weight: 700; }
+.app-main .text-white { color: #fff !important; }
 .app-main .text-danger { color: #142b4a !important; }
 .app-main .btn-primary, .app-main .btn-success { background: #176dd4; border-color: #176dd4; }
 .app-main .btn-primary:hover, .app-main .btn-success:hover { background: #0958b6; border-color: #0958b6; }
