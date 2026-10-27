@@ -779,14 +779,34 @@ export default function App() {
                 </button>
               </li>
               {userRole === 'admin' && (
-                <li className="nav-item">
-                  <button 
-                    className={`nav-link text-start w-100 ${viewMode === 'admin' ? 'active bg-danger' : 'text-white'}`}
-                    onClick={() => { setViewMode('admin'); if(window.innerWidth < 768) setSidebarOpen(false); }}
-                  >
-                    🛡️ Admin Control Panel
-                  </button>
-                </li>
+                <>
+                  <li className="nav-item">
+                    <button 
+                      className={`nav-link text-start w-100 ${viewMode === 'admin' ? 'active bg-danger' : 'text-white'}`}
+                      onClick={() => { setViewMode('admin'); setAdminSection('overview'); if(window.innerWidth < 768) setSidebarOpen(false); }}
+                    >
+                      🛡️ Admin Control Panel
+                    </button>
+                  </li>
+                  <li className="nav-item ms-3 mt-1">
+                    <div className="text-uppercase text-white-50 small fw-bold px-2 mb-1">Admin pages</div>
+                    {[
+                      ['overview', 'Overview'],
+                      ['calendar', '📅 Bookings Calendar'],
+                      ['packages', '📦 Package Management'],
+                      ['tasks', '🌐 Global Tasks'],
+                    ].map(([section, label]) => (
+                      <button
+                        type="button"
+                        key={section}
+                        className={`nav-link text-start w-100 py-1 small ${viewMode === 'admin' && adminSection === section ? 'active bg-danger' : 'text-white'}`}
+                        onClick={() => { setViewMode('admin'); setAdminSection(section); if(window.innerWidth < 768) setSidebarOpen(false); }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </li>
+                </>
               )}
             </ul>
             <hr className="text-secondary" />
@@ -928,24 +948,6 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-
-                <nav className="nav nav-pills flex-column flex-sm-row gap-2 mb-4" aria-label="Admin sections">
-                  {[
-                    ['overview', '📊 Overview'],
-                    ['calendar', '📅 Bookings Calendar'],
-                    ['packages', '📦 Package Management'],
-                    ['tasks', '🌐 Global Tasks'],
-                  ].map(([section, label]) => (
-                    <button
-                      type="button"
-                      key={section}
-                      className={`nav-link text-start ${adminSection === section ? 'active bg-danger' : 'text-dark bg-light border'}`}
-                      onClick={() => setAdminSection(section)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </nav>
 
                 {/* SALES GRAPH SECTION WITH FILTER */}
                 {adminSection === 'overview' && (
