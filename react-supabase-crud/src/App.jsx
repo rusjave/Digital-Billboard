@@ -727,9 +727,9 @@ export default function App() {
   }
 
   return (
-    <div className="d-flex flex-column min-vh-100 bg-light">
+    <div className="d-flex flex-column min-vh-100 app-shell">
       {/* TOP NAVBAR HEADER */}
-      <nav className="navbar navbar-dark bg-dark shadow-sm px-3 sticky-top">
+      <nav className="navbar app-topbar px-3 sticky-top">
         <div className="d-flex align-items-center gap-2 gap-md-3">
           {session && (
             <button 
@@ -739,12 +739,12 @@ export default function App() {
               ☰ Menu
             </button>
           )}
-          <span className="navbar-brand fw-bold mb-0 h1 fs-5 fs-md-4">🚀 TaskManager Pro</span>
+          <span className="navbar-brand fw-bold mb-0 h1 fs-5 fs-md-4 app-brand"><span className="brand-mark">◆</span> KKK GROUP <small>Digital Billboard</small></span>
         </div>
 
         {session && (
           <div className="d-flex align-items-center gap-2 gap-md-3">
-            <span className="text-white-50 small d-none d-md-inline">{session.user.email}</span>
+            <span className="text-muted small d-none d-md-inline">{session.user.email}</span>
             <span className={`badge ${userRole === 'admin' ? 'bg-danger' : 'bg-primary'}`}>
               {userRole.toUpperCase()}
             </span>
@@ -759,7 +759,7 @@ export default function App() {
       <div className="d-flex flex-grow-1 position-relative">
         {session && sidebarOpen && (
           <aside 
-            className="bg-dark text-white p-3 d-flex flex-column shadow" 
+            className="app-sidebar text-white p-3 d-flex flex-column shadow" 
             style={{ 
               width: '260px', 
               minWidth: '260px', 
@@ -818,7 +818,7 @@ export default function App() {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <main className="container-fluid p-2 p-md-4 flex-grow-1 overflow-hidden">
+        <main className="container-fluid p-3 p-md-4 flex-grow-1 overflow-hidden app-main">
           {!session ? (
             /* AUTH CARD */
             <div className="row justify-content-center">
@@ -952,6 +952,12 @@ export default function App() {
                 {/* SALES GRAPH SECTION WITH FILTER */}
                 {adminSection === 'overview' && (
                   <>
+                <div className="row row-cols-2 row-cols-lg-4 g-3 mb-4">
+                  <div className="col"><div className="card h-100 p-3"><small className="text-muted">Total Advertisers</small><div className="fs-3 fw-bold text-primary">{adminUsers.length}</div><small className="text-success">Registered users</small></div></div>
+                  <div className="col"><div className="card h-100 p-3"><small className="text-muted">Active Bookings</small><div className="fs-3 fw-bold text-primary">{allTodos.filter(todo => !todo.is_completed).length}</div><small className="text-success">Awaiting completion</small></div></div>
+                  <div className="col"><div className="card h-100 p-3"><small className="text-muted">Total Revenue</small><div className="fs-3 fw-bold text-primary">₱{allTodos.reduce((total, todo) => total + Number(todo.price || 0), 0).toLocaleString('en-PH')}</div><small className="text-success">All recorded tasks</small></div></div>
+                  <div className="col"><div className="card h-100 p-3"><small className="text-muted">Packages</small><div className="fs-3 fw-bold text-primary">{pricingPackages.length}</div><small className="text-success">Available plans</small></div></div>
+                </div>
                 <div className="card bg-light border-0 p-3 mb-4">
                   <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 gap-2">
                     <h4 className="m-0 fs-5">📊 Total Sales Analytics</h4>
