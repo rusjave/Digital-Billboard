@@ -84,6 +84,7 @@ export default function App() {
   const [adminEditingId, setAdminEditingId] = useState(null)
   const [adminEditText, setAdminEditText] = useState('')
   const [salesFilter, setSalesFilter] = useState('month') // 'year', 'month', 'week'
+  const [adminSection, setAdminSection] = useState('overview')
   const [pricingPackages, setPricingPackages] = useState(PRICING_PACKAGES)
   const [packageForm, setPackageForm] = useState({ id: null, name: '', price: '', dailyPlays: '' })
   const [savingPackage, setSavingPackage] = useState(false)
@@ -928,7 +929,27 @@ export default function App() {
                   </div>
                 </div>
 
+                <nav className="nav nav-pills flex-column flex-sm-row gap-2 mb-4" aria-label="Admin sections">
+                  {[
+                    ['overview', '📊 Overview'],
+                    ['calendar', '📅 Bookings Calendar'],
+                    ['packages', '📦 Package Management'],
+                    ['tasks', '🌐 Global Tasks'],
+                  ].map(([section, label]) => (
+                    <button
+                      type="button"
+                      key={section}
+                      className={`nav-link text-start ${adminSection === section ? 'active bg-danger' : 'text-dark bg-light border'}`}
+                      onClick={() => setAdminSection(section)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </nav>
+
                 {/* SALES GRAPH SECTION WITH FILTER */}
+                {adminSection === 'overview' && (
+                  <>
                 <div className="card bg-light border-0 p-3 mb-4">
                   <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 gap-2">
                     <h4 className="m-0 fs-5">📊 Total Sales Analytics</h4>
@@ -972,8 +993,12 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                  </>
+                )}
                 
                 {/* ALL BOOKINGS CALENDAR */}
+                {adminSection === 'calendar' && (
+                  <>
                 <div className="card border-info mb-4">
                   <div className="card-header bg-info-subtle d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
                     <h4 className="m-0 fs-5">📅 All Bookings Calendar</h4>
@@ -1063,8 +1088,11 @@ export default function App() {
                     </div>
                   </div>
                 )}
+                  </>
+                )}
 
                 {/* PRICING PACKAGE MANAGEMENT */}
+                {adminSection === 'packages' && (
                 <div className="card border-primary mb-4">
                   <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h4 className="m-0 fs-5">📦 Package Management</h4>
@@ -1146,8 +1174,11 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* USER PROFILES & TODO CARDS SECTION */}
+                {adminSection === 'overview' && (
+                  <>
                 <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 gap-2">
                   <h4 className="m-0 fs-5">👤 User Profiles & Task Overview</h4>
                   <button 
@@ -1219,9 +1250,12 @@ export default function App() {
                     )
                   })}
                 </div>
+                  </>
+                )}
               </div>
 
               {/* SEPARATE GLOBAL TASKS SECTION WITH PAGINATION */}
+              {adminSection === 'tasks' && (
               <div className="card shadow border-0 p-3 p-md-4">
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
                   <h4 className="m-0 fs-5">🌐 Global Tasks List by User Profile ({allTodos.length})</h4>
@@ -1389,6 +1423,7 @@ export default function App() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           ) : (
             /* USER DASHBOARD WITH PROFESSIONAL DATA TABLE DISPLAY */
