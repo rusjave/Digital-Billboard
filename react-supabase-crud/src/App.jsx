@@ -2337,7 +2337,7 @@ export default function App() {
       {/* FOOTER */}
       <footer className="bg-dark text-white text-center py-3 mt-auto shadow-sm">
         <div className="container">
-          <small className="text-white-50">© 2026 TaskManager Pro. Built with React, Supabase & Bootstrap 5.</small>
+          <small className="text-white-50">© 2026 <strong>KKK GROUP Digital Billboard</strong>.</small>
         </div>
       </footer>
     </div>
