@@ -806,7 +806,7 @@ export default function App() {
                   className={`nav-link text-start w-100 ${viewMode === 'user' ? 'active bg-primary' : 'text-white'}`}
                   onClick={() => { setViewMode('user'); if(window.innerWidth < 768) setSidebarOpen(false); }}
                 >
-                  📋 Tasks List
+                  📋 Create booking
                 </button>
               </li>
               {userRole === 'admin' && (
@@ -1519,14 +1519,14 @@ export default function App() {
                   {/* TRIGGER MODAL BUTTON */}
                   <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
                     <div>
-                      <h4 className="fw-bold text-dark m-0 fs-4">📋 My Tasks Directory</h4>
+                      <h4 className="fw-bold text-dark m-0 fs-4">📋 My bookings</h4>
                       <small className="text-muted">Manage your tasks, scheduled delivery dates, and payment logs</small>
                     </div>
                     <button 
                       className="btn btn-primary px-4 py-2 fw-bold shadow-sm"
                       onClick={() => setShowTaskModal(true)}
                     >
-                      ➕ Create New Task
+                      ➕ Create booking
                     </button>
                   </div>
 
@@ -1669,7 +1669,7 @@ export default function App() {
                         {todos.length === 0 && (
                           <tr>
                             <td colSpan="7" className="text-center text-muted py-4">
-                              No tasks created yet. Click <strong>"➕ Create New Task"</strong> above to get started!
+                              No bookings created yet. Click <strong>"➕ Create booking"</strong> above to get started!
                             </td>
                           </tr>
                         )}
@@ -1958,7 +1958,7 @@ export default function App() {
           <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div className="modal-content">
               <div className="modal-header bg-dark text-white">
-                <h5 className="modal-title fw-bold fs-5">➕ Create New Task with Payment</h5>
+                <h5 className="modal-title fw-bold fs-5">➕ Creating booking</h5>
                 <button 
                   type="button" 
                   className="btn-close btn-close-white" 
