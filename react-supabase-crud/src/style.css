@@ -19,6 +19,13 @@ button, input, select, textarea { font: inherit; }
 }
 .app-topbar .btn-outline-light { color: #1f6ed4; border-color: #dce8f7; background: #f8fbff; }
 .app-topbar .btn-outline-light:hover { color: #fff; background: #1768cf; border-color: #1768cf; }
+.notification-trigger { min-width: 34px; line-height: 1.25; }
+.notification-count { font-size: .62rem; min-width: 1.2rem; border: 2px solid #fff; }
+.notification-panel { position: absolute; right: 0; top: calc(100% + .55rem); width: min(360px, calc(100vw - 2rem)); z-index: 1050; overflow: hidden; }
+.notification-panel .card-header { border-bottom: 1px solid #e7eef5; }
+.notification-panel .list-group-item { border-color: #edf1f6; }
+.notification-dot { display: block; width: .55rem; height: .55rem; min-width: .55rem; margin-top: .32rem; border-radius: 50%; }
+.booking-row-highlight > * { background-color: #fff3cd !important; transition: background-color .25s ease; }
 .app-brand { color: #0b3263 !important; letter-spacing: -.4px; display: flex; align-items: center; gap: 8px; }
 .app-brand small { color: #6c7b90; font-size: .58em; font-weight: 600; letter-spacing: 0; border-left: 1px solid #dbe5f0; padding-left: 8px; }
 .brand-mark { color: #2e86e6; font-size: 1.25em; text-shadow: 2px 2px 0 #0b3263; }

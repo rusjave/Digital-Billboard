@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabaseClient'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
@@ -20,6 +20,8 @@ export default function App() {
   const [viewMode, setViewMode] = useState('user') // 'user' or 'admin'
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [focusedBookingId, setFocusedBookingId] = useState(null)
 
   // Auth form state
   const [email, setEmail] = useState('')
@@ -99,6 +101,68 @@ export default function App() {
   const itemsPerPage = 5
   const [userBookingsPage, setUserBookingsPage] = useState(1)
 
+  // The header uses the same booking fields displayed in the tables, so the
+  // notification status stays accurate without maintaining a second data set.
+  const bookingNotifications = useMemo(() => {
+    const bookings = userRole === 'admin' ? allTodos : todos
+
+    return bookings
+      .map(booking => {
+        if (userRole === 'admin') {
+          return {
+            id: booking.id,
+            title: booking.title,
+            message: booking.is_completed
+              ? 'Booking has been marked as uploaded completed.'
+              : `New booking from ${booking.profiles?.email || 'a customer'} is awaiting review.`,
+            tone: booking.is_completed ? 'success' : 'warning',
+          }
+        }
+
+        if (booking.is_completed) {
+          return { id: booking.id, title: booking.title, message: 'Your booking has been uploaded and completed.', tone: 'success' }
+        }
+
+        return {
+          id: booking.id,
+          title: booking.title,
+          message: booking.payment_verified ? 'Payment confirmed. Your booking is awaiting review.' : 'Payment is awaiting verification.',
+          tone: booking.payment_verified ? 'primary' : 'warning',
+        }
+      })
+      .sort((first, second) => {
+        const firstBooking = bookings.find(booking => booking.id === first.id)
+        const secondBooking = bookings.find(booking => booking.id === second.id)
+        return new Date(secondBooking?.inserted_at || 0) - new Date(firstBooking?.inserted_at || 0)
+      })
+      .slice(0, 8)
+  }, [allTodos, todos, userRole])
+
+  const unreadNotificationCount = useMemo(() => (
+    bookingNotifications.filter(notification => notification.tone !== 'success').length
+  ), [bookingNotifications])
+
+  const openBookingFromNotification = (bookingId) => {
+    setNotificationsOpen(false)
+    setFocusedBookingId(bookingId)
+
+    if (userRole === 'admin') {
+      const bookingIndex = allTodos.findIndex(booking => booking.id === bookingId)
+      setViewMode('admin')
+      setAdminSection('tasks')
+      setAdminSearchTerm('')
+      setCurrentPage(bookingIndex >= 0 ? Math.floor(bookingIndex / itemsPerPage) + 1 : 1)
+    } else {
+      const bookingIndex = todos.findIndex(booking => booking.id === bookingId)
+      setViewMode('user')
+      setUserBookingsPage(bookingIndex >= 0 ? Math.floor(bookingIndex / itemsPerPage) + 1 : 1)
+    }
+
+    window.setTimeout(() => {
+      document.getElementById(`booking-${bookingId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+  }
+
   // 1. Session & Auth Listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -144,6 +208,23 @@ export default function App() {
       fetchCustomPlanSettings()
       if (userRole === 'admin') fetchAdminData()
     }
+  }, [session, userRole])
+
+  // Keep the bell current when another person creates or updates a booking.
+  // This takes effect automatically when the todos table is enabled for
+  // Supabase Realtime; the normal fetch above remains the fallback.
+  useEffect(() => {
+    if (!session) return undefined
+
+    const bookingChannel = supabase
+      .channel(`booking-status-${session.user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, () => {
+        fetchTodos()
+        if (userRole === 'admin') fetchAdminData()
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(bookingChannel)
   }, [session, userRole])
 
   // Pricing selection handler. The package sets the payment total and play capacity.
@@ -788,6 +869,52 @@ export default function App() {
             <span className={`badge ${userRole === 'admin' ? 'bg-danger' : 'bg-primary'}`}>
               {userRole.toUpperCase()}
             </span>
+            <div className="position-relative">
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm notification-trigger"
+                onClick={() => setNotificationsOpen(isOpen => !isOpen)}
+                aria-expanded={notificationsOpen}
+                aria-controls="booking-notifications"
+              >
+                <span aria-hidden="true">🔔</span>
+                <span className="visually-hidden">Booking notifications</span>
+                {unreadNotificationCount > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+              {notificationsOpen && (
+                <div id="booking-notifications" className="card shadow notification-panel" role="region" aria-label="Booking notifications">
+                  <div className="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <strong className="small">Booking notifications</strong>
+                    <button type="button" className="btn-close btn-close-sm" aria-label="Close notifications" onClick={() => setNotificationsOpen(false)} />
+                  </div>
+                  <div className="list-group list-group-flush">
+                    {bookingNotifications.length ? bookingNotifications.map(notification => (
+                      <button
+                        type="button"
+                        className="list-group-item list-group-item-action py-2 text-start"
+                        key={notification.id}
+                        onClick={() => openBookingFromNotification(notification.id)}
+                        aria-label={`Open booking: ${notification.title}`}
+                      >
+                        <div className="d-flex gap-2">
+                          <span className={`notification-dot bg-${notification.tone}`} aria-hidden="true" />
+                          <div className="small">
+                            <div className="fw-semibold text-dark text-truncate">{notification.title}</div>
+                            <div className="text-muted">{notification.message}</div>
+                          </div>
+                        </div>
+                      </button>
+                    )) : (
+                      <div className="list-group-item text-muted small py-3">No booking notifications yet.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={handleLogout} className="btn btn-outline-danger btn-sm">
               Logout
             </button>
@@ -1367,7 +1494,7 @@ export default function App() {
                     </thead>
                     <tbody>
                       {currentPaginatedTodos.map(t => (
-                        <tr key={t.id}>
+                        <tr key={t.id} id={`booking-${t.id}`} className={focusedBookingId === t.id ? 'booking-row-highlight' : ''}>
                           <td>
                             <div className="d-flex align-items-center gap-2">
                               <span className="badge bg-primary rounded-circle p-2">📧</span>
@@ -1549,7 +1676,7 @@ export default function App() {
                       </thead>
                       <tbody>
                         {paginatedUserBookings.map(todo => (
-                          <tr key={todo.id}>
+                          <tr key={todo.id} id={`booking-${todo.id}`} className={focusedBookingId === todo.id ? 'booking-row-highlight' : ''}>
                             {/* Checkbox Status Column */}
                             <td className="text-center">
                               <input
