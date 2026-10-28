@@ -969,12 +969,6 @@ export default function App() {
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
                   <h2 className="text-danger m-0 fs-4 fs-md-3">🛡️ Admin Dashboard & Control Panel</h2>
                   <div className="d-flex gap-2 flex-wrap">
-                    <button 
-                      className="btn btn-sm btn-dark fw-bold"
-                      onClick={() => setAdminSection('users')}
-                    >
-                      📋 View Registered Users Directory ({adminUsers.length})
-                    </button>
                     <button className="btn btn-sm btn-outline-secondary" onClick={fetchAdminData}>
                       🔄 Refresh Data
                     </button>
@@ -1222,7 +1216,7 @@ export default function App() {
                 {adminSection === 'overview' && (
                   <>
                 <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 gap-2">
-                  <h4 className="m-0 fs-5">👤 User Profiles & Task Overview</h4>
+                  <h4 className="m-0 fs-5">👤 User booking overview</h4>
                   <button 
                     className="btn btn-sm btn-outline-primary fw-semibold"
                     onClick={() => setAdminSection('users')}
