@@ -22,6 +22,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [focusedBookingId, setFocusedBookingId] = useState(null)
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState([])
 
   // Auth form state
   const [email, setEmail] = useState('')
@@ -139,12 +140,37 @@ export default function App() {
   }, [allTodos, todos, userRole])
 
   const unreadNotificationCount = useMemo(() => (
-    bookingNotifications.filter(notification => notification.tone !== 'success').length
-  ), [bookingNotifications])
+    bookingNotifications.filter(notification => !dismissedNotificationIds.includes(notification.id) && notification.tone !== 'success').length
+  ), [bookingNotifications, dismissedNotificationIds])
+
+  const visibleBookingNotifications = useMemo(() => (
+    bookingNotifications.filter(notification => !dismissedNotificationIds.includes(notification.id))
+  ), [bookingNotifications, dismissedNotificationIds])
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setDismissedNotificationIds([])
+      return
+    }
+
+    try {
+      const savedDismissals = JSON.parse(localStorage.getItem(`dismissed-booking-notifications-${session.user.id}`) || '[]')
+      setDismissedNotificationIds(Array.isArray(savedDismissals) ? savedDismissals : [])
+    } catch {
+      setDismissedNotificationIds([])
+    }
+  }, [session?.user?.id])
 
   const openBookingFromNotification = (bookingId) => {
     setNotificationsOpen(false)
     setFocusedBookingId(bookingId)
+    setDismissedNotificationIds(currentDismissals => {
+      const updatedDismissals = currentDismissals.includes(bookingId) ? currentDismissals : [...currentDismissals, bookingId]
+      if (session?.user?.id) {
+        localStorage.setItem(`dismissed-booking-notifications-${session.user.id}`, JSON.stringify(updatedDismissals))
+      }
+      return updatedDismissals
+    })
 
     if (userRole === 'admin') {
       const bookingIndex = allTodos.findIndex(booking => booking.id === bookingId)
@@ -892,7 +918,7 @@ export default function App() {
                     <button type="button" className="btn-close btn-close-sm" aria-label="Close notifications" onClick={() => setNotificationsOpen(false)} />
                   </div>
                   <div className="list-group list-group-flush">
-                    {bookingNotifications.length ? bookingNotifications.map(notification => (
+                    {visibleBookingNotifications.length ? visibleBookingNotifications.map(notification => (
                       <button
                         type="button"
                         className="list-group-item list-group-item-action py-2 text-start"
@@ -909,7 +935,7 @@ export default function App() {
                         </div>
                       </button>
                     )) : (
-                      <div className="list-group-item text-muted small py-3">No booking notifications yet.</div>
+                      <div className="list-group-item text-muted small py-3">No booking notifications to review.</div>
                     )}
                   </div>
                 </div>
