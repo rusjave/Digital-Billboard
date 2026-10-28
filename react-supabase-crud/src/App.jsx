@@ -97,6 +97,7 @@ export default function App() {
   // Pagination State for Global Tasks
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
+  const [userBookingsPage, setUserBookingsPage] = useState(1)
 
   // 1. Session & Auth Listener
   useEffect(() => {
@@ -348,6 +349,7 @@ export default function App() {
       if (error) throw error
 
       setTodos([data[0], ...todos])
+      setUserBookingsPage(1)
       // Keep the admin calendar current when an administrator creates a booking.
       setAllTodos(currentTodos => [data[0], ...currentTodos.filter(todo => todo.id !== data[0].id)])
       
@@ -666,6 +668,13 @@ export default function App() {
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentPaginatedTodos = filteredAdminTodos.slice(indexOfFirstItem, indexOfLastItem)
+  const userBookingsTotalPages = Math.ceil(todos.length / itemsPerPage) || 1
+  const userBookingsFirstIndex = (userBookingsPage - 1) * itemsPerPage
+  const paginatedUserBookings = todos.slice(userBookingsFirstIndex, userBookingsFirstIndex + itemsPerPage)
+
+  useEffect(() => {
+    setUserBookingsPage(currentPage => Math.min(currentPage, userBookingsTotalPages))
+  }, [userBookingsTotalPages])
 
   const handleSearchChange = (e) => {
     setAdminSearchTerm(e.target.value)
@@ -1539,7 +1548,7 @@ export default function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {todos.map(todo => (
+                        {paginatedUserBookings.map(todo => (
                           <tr key={todo.id}>
                             {/* Checkbox Status Column */}
                             <td className="text-center">
@@ -1670,6 +1679,24 @@ export default function App() {
                       </tbody>
                     </table>
                   </div>
+                  {todos.length > itemsPerPage && (
+                    <nav className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mt-3" aria-label="My bookings pagination">
+                      <small className="text-muted">Showing {userBookingsFirstIndex + 1}–{Math.min(userBookingsFirstIndex + itemsPerPage, todos.length)} of {todos.length} bookings</small>
+                      <ul className="pagination pagination-sm mb-0">
+                        <li className={`page-item ${userBookingsPage === 1 ? 'disabled' : ''}`}>
+                          <button type="button" className="page-link" onClick={() => setUserBookingsPage(page => Math.max(page - 1, 1))}>Previous</button>
+                        </li>
+                        {Array.from({ length: userBookingsTotalPages }, (_, index) => index + 1).map(page => (
+                          <li className={`page-item ${userBookingsPage === page ? 'active' : ''}`} key={page}>
+                            <button type="button" className="page-link" onClick={() => setUserBookingsPage(page)}>{page}</button>
+                          </li>
+                        ))}
+                        <li className={`page-item ${userBookingsPage === userBookingsTotalPages ? 'disabled' : ''}`}>
+                          <button type="button" className="page-link" onClick={() => setUserBookingsPage(page => Math.min(page + 1, userBookingsTotalPages))}>Next</button>
+                        </li>
+                      </ul>
+                    </nav>
+                  )}
                 </div>
               </div>
             </div>
