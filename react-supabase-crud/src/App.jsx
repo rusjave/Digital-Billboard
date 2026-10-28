@@ -87,6 +87,8 @@ export default function App() {
   const [adminEditingId, setAdminEditingId] = useState(null)
   const [adminEditText, setAdminEditText] = useState('')
   const [salesFilter, setSalesFilter] = useState('month') // 'year', 'month', 'week'
+  const [salesStartDate, setSalesStartDate] = useState('')
+  const [salesEndDate, setSalesEndDate] = useState('')
   const [adminSection, setAdminSection] = useState('overview')
   const [pricingPackages, setPricingPackages] = useState(PRICING_PACKAGES)
   const [packageForm, setPackageForm] = useState({ id: null, name: '', price: '', dailyPlays: '' })
@@ -822,10 +824,23 @@ export default function App() {
   const selectedCalendarBookings = selectedCalendarDate ? getBookingsForCalendarDay(selectedCalendarDate) : []
 
   // --- SALES GRAPH DATA AGGREGATOR ---
+  const filteredSalesTodos = useMemo(() => allTodos.filter(todo => {
+    if (!todo.inserted_at) return false
+
+    const bookingDate = new Date(todo.inserted_at)
+    bookingDate.setHours(0, 0, 0, 0)
+    const startDate = salesStartDate ? new Date(`${salesStartDate}T00:00:00`) : null
+    const endDate = salesEndDate ? new Date(`${salesEndDate}T23:59:59.999`) : null
+
+    return (!startDate || bookingDate >= startDate) && (!endDate || bookingDate <= endDate)
+  }), [allTodos, salesStartDate, salesEndDate])
+
+  const filteredSalesTotal = filteredSalesTodos.reduce((total, todo) => total + Number(todo.price || 0), 0)
+
   const getSalesChartData = () => {
     const salesMap = {}
 
-    allTodos.forEach(t => {
+    filteredSalesTodos.forEach(t => {
       if (!t.inserted_at) return
       const date = new Date(t.inserted_at)
       let key = ''
@@ -1172,6 +1187,22 @@ export default function App() {
                         Weekly
                       </button>
                     </div>
+                  </div>
+
+                  <div className="d-flex flex-column flex-sm-row align-items-sm-center gap-2 mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <label className="visually-hidden" htmlFor="sales-start-date">Start date</label>
+                      <input id="sales-start-date" type="date" className="form-control form-control-sm" value={salesStartDate} max={salesEndDate || undefined} onChange={(e) => setSalesStartDate(e.target.value)} />
+                      <span className="text-muted small">to</span>
+                      <label className="visually-hidden" htmlFor="sales-end-date">End date</label>
+                      <input id="sales-end-date" type="date" className="form-control form-control-sm" value={salesEndDate} min={salesStartDate || undefined} onChange={(e) => setSalesEndDate(e.target.value)} />
+                    </div>
+                    {(salesStartDate || salesEndDate) && (
+                      <button type="button" className="btn btn-sm btn-outline-secondary align-self-sm-auto align-self-start" onClick={() => { setSalesStartDate(''); setSalesEndDate('') }}>Clear dates</button>
+                    )}
+                    <small className="text-muted">
+                      {filteredSalesTodos.length} booking{filteredSalesTodos.length === 1 ? '' : 's'} in range · <strong className="text-dark">₱{filteredSalesTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong>
+                    </small>
                   </div>
 
                   <div className="row justify-content-center">
