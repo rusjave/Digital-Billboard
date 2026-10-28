@@ -57,16 +57,16 @@ export default function App() {
   // User Task Form state
   const [todos, setTodos] = useState([])
   const [newTodo, setNewTodo] = useState('')
-  const [scheduledAt, setScheduledAt] = useState('')
+  // Scheduling applies to every plan type and is shown on the bookings calendar.
+  const [scheduleStartDate, setScheduleStartDate] = useState('')
+  const [scheduleEndDate, setScheduleEndDate] = useState('')
+  const [dailyRunTimes, setDailyRunTimes] = useState(['09:00'])
   const [price, setPrice] = useState('')
   const [duration, setDuration] = useState('')
   const [planTab, setPlanTab] = useState('custom')
   const [customPlanSettings, setCustomPlanSettings] = useState({ rate: 0, rateUnit: 'second', playLength: 0 })
   const [customPlanSettingsForm, setCustomPlanSettingsForm] = useState({ rate: '', rateUnit: 'second', playLength: '' })
   const [customRunsPerSlot, setCustomRunsPerSlot] = useState('')
-  const [customStartDate, setCustomStartDate] = useState('')
-  const [customEndDate, setCustomEndDate] = useState('')
-  const [customTimeSlots, setCustomTimeSlots] = useState(['09:00'])
   const [videoFile, setVideoFile] = useState(null)
   const [videoDurationSeconds, setVideoDurationSeconds] = useState(null)
   const [paymentOption, setPaymentOption] = useState('paymongo')
@@ -160,17 +160,17 @@ export default function App() {
     setHasPaid(false)
   }
 
-  const customPlanDays = customStartDate && customEndDate && customEndDate >= customStartDate
-    ? Math.floor((new Date(`${customEndDate}T00:00:00`) - new Date(`${customStartDate}T00:00:00`)) / 86400000) + 1
+  const customPlanDays = scheduleStartDate && scheduleEndDate && scheduleEndDate >= scheduleStartDate
+    ? Math.floor((new Date(`${scheduleEndDate}T00:00:00`) - new Date(`${scheduleStartDate}T00:00:00`)) / 86400000) + 1
     : 0
   const videoDurationInRateUnit = customPlanSettings.rateUnit === 'minute'
     ? Number(videoDurationSeconds || 0) / 60
     : Number(videoDurationSeconds || 0)
-  const customPlanTotal = Number(customPlanSettings.rate) * videoDurationInRateUnit * Number(customRunsPerSlot) * customTimeSlots.length * customPlanDays
-  const customPlanSummary = `Custom plan: ₱${customPlanSettings.rate || 0}/${customPlanSettings.rateUnit}; ${Number(videoDurationSeconds || 0).toFixed(2)}-second uploaded video; ${customRunsPerSlot || 0} run(s) at ${customTimeSlots.join(', ') || 'no times'} daily; ${customPlanDays} day(s) (${customStartDate || 'start'} to ${customEndDate || 'end'})`
+  const customPlanTotal = Number(customPlanSettings.rate) * videoDurationInRateUnit * Number(customRunsPerSlot) * dailyRunTimes.length * customPlanDays
+  const customPlanSummary = `Custom plan: ₱${customPlanSettings.rate || 0}/${customPlanSettings.rateUnit}; ${Number(videoDurationSeconds || 0).toFixed(2)}-second uploaded video; ${customRunsPerSlot || 0} run(s) at ${dailyRunTimes.join(', ') || 'no times'} daily; ${customPlanDays} day(s) (${scheduleStartDate || 'start'} to ${scheduleEndDate || 'end'})`
 
   const updateCustomTimeSlot = (index, value) => {
-    setCustomTimeSlots(customTimeSlots.map((time, timeIndex) => timeIndex === index ? value : time))
+    setDailyRunTimes(dailyRunTimes.map((time, timeIndex) => timeIndex === index ? value : time))
   }
 
   const handleVideoFileChange = (file) => {
@@ -201,7 +201,7 @@ export default function App() {
     if (planTab === 'custom') {
       setPrice(customPlanTotal > 0 ? customPlanTotal.toFixed(2) : '')
     }
-  }, [planTab, customPlanSettings, videoDurationSeconds, customRunsPerSlot, customStartDate, customEndDate, customTimeSlots])
+  }, [planTab, customPlanSettings, videoDurationSeconds, customRunsPerSlot, scheduleStartDate, scheduleEndDate, dailyRunTimes])
 
   // --- AUTH ACTIONS ---
   const handleAuth = async (e) => {
@@ -252,8 +252,13 @@ export default function App() {
       return
     }
 
-    if (!scheduledAt) {
-      alert('Please select a scheduled date and time.')
+    if (!scheduleStartDate || !scheduleEndDate || scheduleEndDate < scheduleStartDate) {
+      alert('Please select a valid start and end date.')
+      return
+    }
+
+    if (!dailyRunTimes.length || dailyRunTimes.some(time => !time)) {
+      alert('Please enter at least one daily run time.')
       return
     }
 
@@ -267,7 +272,7 @@ export default function App() {
       return
     }
 
-    if (planTab === 'custom' && (!customPlanSettings.rate || !videoDurationSeconds || !customRunsPerSlot || !customStartDate || !customEndDate || customPlanDays <= 0 || customTimeSlots.some(time => !time))) {
+    if (planTab === 'custom' && (!customPlanSettings.rate || !videoDurationSeconds || !customRunsPerSlot || customPlanDays <= 0)) {
       alert('Wait for the uploaded video duration, then complete the custom plan runs, date range, and time slots.')
       return
     }
@@ -291,6 +296,20 @@ export default function App() {
     let uploadedVideoUrl = null
 
     try {
+      // Check before uploading so the user gets immediate feedback instead of
+      // uploading a video for dates that are already reserved.
+      const { data: isScheduleAvailable, error: availabilityError } = await supabase
+        .rpc('is_booking_range_available', {
+          p_start_date: scheduleStartDate,
+          p_end_date: scheduleEndDate,
+        })
+
+      if (availabilityError) throw availabilityError
+      if (!isScheduleAvailable) {
+        alert('Those booking dates are already reserved. Please choose a different date range.')
+        return
+      }
+
       // 1. Upload Video File
       const fileExt = videoFile.name.split('.').pop()
       const fileName = `${session.user.id}_${Date.now()}.${fileExt}`
@@ -314,7 +333,9 @@ export default function App() {
         .insert([{ 
           title: newTodo, 
           user_id: session.user.id,
-          scheduled_at: scheduledAt,
+          start_date: scheduleStartDate,
+          end_date: scheduleEndDate,
+          daily_run_times: dailyRunTimes,
           price: parseFloat(price),
           duration: planTab === 'custom' ? customPlanSummary : duration,
           video_url: uploadedVideoUrl,
@@ -327,17 +348,18 @@ export default function App() {
       if (error) throw error
 
       setTodos([data[0], ...todos])
+      // Keep the admin calendar current when an administrator creates a booking.
+      setAllTodos(currentTodos => [data[0], ...currentTodos.filter(todo => todo.id !== data[0].id)])
       
       // Reset state and close modal
       setNewTodo('')
-      setScheduledAt('')
+      setScheduleStartDate('')
+      setScheduleEndDate('')
       setPrice('')
       setDuration('')
       setPlanTab('custom')
       setCustomRunsPerSlot('')
-      setCustomStartDate('')
-      setCustomEndDate('')
-      setCustomTimeSlots(['09:00'])
+      setDailyRunTimes(['09:00'])
       setVideoFile(null)
       setVideoDurationSeconds(null)
       setPaymentOption('paymongo')
@@ -563,7 +585,7 @@ export default function App() {
 
   const saveEditUser = async (userId) => {
     try {
-      const { error } = await supabase
+      const { data: updatedUser, error } = await supabase
         .from('profiles')
         .update({
           first_name: editFirstName,
@@ -574,18 +596,12 @@ export default function App() {
           role: editRole
         })
         .eq('id', userId)
+        .select('*')
+        .single()
 
       if (error) throw error
 
-      setAdminUsers(adminUsers.map(u => u.id === userId ? {
-        ...u,
-        first_name: editFirstName,
-        last_name: editLastName,
-        middle_name: editMiddleName,
-        contact_number: editContact,
-        address: editAddress,
-        role: editRole
-      } : u))
+      setAdminUsers(adminUsers.map(u => u.id === userId ? updatedUser : u))
 
       setEditingUserId(null)
       alert('User updated successfully!')
@@ -665,13 +681,28 @@ export default function App() {
     return date
   })
 
-  const getBookingsForCalendarDay = (date) => allTodos.filter(todo => {
-    if (!todo.scheduled_at) return false
-    const bookingDate = new Date(todo.scheduled_at)
-    return bookingDate.getFullYear() === date.getFullYear()
-      && bookingDate.getMonth() === date.getMonth()
-      && bookingDate.getDate() === date.getDate()
-  })
+  const toCalendarDateKey = (date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+  const getBookingRunTimes = (booking) => {
+    if (Array.isArray(booking.daily_run_times)) return booking.daily_run_times.filter(Boolean)
+    if (booking.scheduled_at) {
+      return [new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })]
+    }
+    return []
+  }
+  const getBookingScheduleLabel = (booking) => {
+    if (booking.start_date) return booking.end_date && booking.end_date !== booking.start_date
+      ? `${booking.start_date} to ${booking.end_date}`
+      : booking.start_date
+    return booking.scheduled_at ? new Date(booking.scheduled_at).toLocaleDateString() : 'Not scheduled'
+  }
+  const getBookingsForCalendarDay = (date) => {
+    const dateKey = toCalendarDateKey(date)
+    return allTodos.filter(todo => {
+      if (todo.start_date) return todo.start_date <= dateKey && (todo.end_date || todo.start_date) >= dateKey
+      if (!todo.scheduled_at) return false
+      return toCalendarDateKey(new Date(todo.scheduled_at)) === dateKey
+    })
+  }
   const selectedCalendarBookings = selectedCalendarDate ? getBookingsForCalendarDay(selectedCalendarDate) : []
 
   // --- SALES GRAPH DATA AGGREGATOR ---
@@ -1045,7 +1076,7 @@ export default function App() {
                             <div className="d-flex flex-column gap-1">
                               {bookings.slice(0, 3).map(booking => (
                                 <div className="bg-primary-subtle border border-primary-subtle rounded px-1 py-1 small text-truncate" title={`${booking.title} — ${booking.profiles?.email || 'Unknown user'}`} key={booking.id}>
-                                  <span className="fw-bold">{new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>{' '}
+                                  <span className="fw-bold">{getBookingRunTimes(booking).join(', ') || 'All day'}</span>{' '}
                                   <span className="d-none d-md-inline">{booking.title}</span>
                                 </div>
                               ))}
@@ -1077,11 +1108,13 @@ export default function App() {
                                 <div className="border rounded p-3" key={booking.id}>
                                   <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-2">
                                     <h6 className="fw-bold mb-0">{booking.title}</h6>
-                                    <span className="badge bg-primary align-self-start">{new Date(booking.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span className="badge bg-primary align-self-start">{getBookingRunTimes(booking).join(', ') || 'All day'}</span>
                                   </div>
                                   <div className="row small g-2">
                                     <div className="col-12 col-md-6"><strong>Customer:</strong> {booking.profiles?.email || 'Unknown user'}</div>
                                     <div className="col-12 col-md-6"><strong>Price:</strong> ₱{Number(booking.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                                    <div className="col-12"><strong>Schedule:</strong> {getBookingScheduleLabel(booking)}</div>
+                                    <div className="col-12"><strong>Daily run times:</strong> {getBookingRunTimes(booking).join(', ') || 'Not specified'}</div>
                                     <div className="col-12"><strong>Plan:</strong> {booking.duration || 'Not specified'}</div>
                                     {booking.video_url && <div className="col-12"><a href={booking.video_url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary mt-1">▶ Watch Video</a></div>}
                                   </div>
@@ -1336,7 +1369,10 @@ export default function App() {
                             <div className="d-flex align-items-center gap-2">
                               <span className="badge bg-primary rounded-circle p-2">📧</span>
                               <div>
-                                <div className="fw-bold small">{t.profiles?.email || session.user.email}</div>
+                                <div className="fw-bold small">
+                                  {[t.profiles?.first_name, t.profiles?.last_name].filter(Boolean).join(' ') || 'Unknown user'}
+                                </div>
+                                <div className="text-muted small">{t.profiles?.email || session.user.email}</div>
                                 <span className={`badge ${t.profiles?.role === 'admin' ? 'bg-danger' : 'bg-secondary'}`} style={{ fontSize: '0.65rem' }}>
                                   {t.profiles?.role || 'user'}
                                 </span>
@@ -1356,9 +1392,12 @@ export default function App() {
                                 <div className={t.is_completed ? 'text-decoration-line-through text-muted fw-bold' : 'fw-bold'}>
                                   {t.title}
                                 </div>
-                                {t.scheduled_at && (
+                                <small className="text-muted d-block">
+                                  User: {t.profiles?.email || 'Unknown user'}
+                                </small>
+                                {(t.start_date || t.scheduled_at) && (
                                   <small className="text-primary d-block">
-                                    📅 Scheduled: {new Date(t.scheduled_at).toLocaleString()}
+                                    📅 Schedule: {getBookingScheduleLabel(t)} · {getBookingRunTimes(t).join(', ') || 'No run time'}
                                   </small>
                                 )}
                                 <small className="text-muted" style={{ fontSize: '0.7rem' }}>
@@ -1498,6 +1537,7 @@ export default function App() {
                         <tr>
                           <th style={{ width: '90px' }} className="text-center">Status</th>
                           <th style={{ minWidth: '220px' }}>Task Details</th>
+                          <th style={{ minWidth: '180px' }}>Added By</th>
                           <th style={{ minWidth: '120px' }}>Video</th>
                           <th style={{ minWidth: '140px' }}>Package & Price</th>
                           <th style={{ minWidth: '180px' }}>Payment Status</th>
@@ -1536,9 +1576,9 @@ export default function App() {
                                     {todo.title}
                                   </div>
 
-                                  {todo.scheduled_at && (
+                                  {(todo.start_date || todo.scheduled_at) && (
                                     <div className="small text-primary mt-1">
-                                      📅 Scheduled: <strong>{new Date(todo.scheduled_at).toLocaleString()}</strong>
+                                      📅 Schedule: <strong>{getBookingScheduleLabel(todo)}</strong> · {getBookingRunTimes(todo).join(', ') || 'No run time'}
                                     </div>
                                   )}
 
@@ -1547,6 +1587,14 @@ export default function App() {
                                   </div>
                                 </div>
                               )}
+                            </td>
+
+                            {/* Added By Column */}
+                            <td>
+                              <div className="fw-semibold small">
+                                {[todo.profiles?.first_name, todo.profiles?.last_name].filter(Boolean).join(' ') || 'Unknown user'}
+                              </div>
+                              <div className="text-muted small">{todo.profiles?.email || 'No email available'}</div>
                             </td>
 
                             {/* Video Column */}
@@ -1620,7 +1668,7 @@ export default function App() {
 
                         {todos.length === 0 && (
                           <tr>
-                            <td colSpan="6" className="text-center text-muted py-4">
+                            <td colSpan="7" className="text-center text-muted py-4">
                               No tasks created yet. Click <strong>"➕ Create New Task"</strong> above to get started!
                             </td>
                           </tr>
@@ -1950,21 +1998,38 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="row">
-                    {/* Calendar with Time (REQUIRED) */}
-                    <div className="col-12 col-md-6 mb-3">
-                      <label className="form-label fw-semibold">📅 Scheduled Date & Time <span className="text-danger">*</span></label>
-                      <input
-                        type="datetime-local"
-                        className="form-control"
-                        value={scheduledAt}
-                        onChange={(e) => setScheduledAt(e.target.value)}
-                        required
-                      />
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold d-block">📅 Booking schedule <span className="text-danger">*</span></label>
+                    <div className="row g-3">
+                      <div className="col-12 col-md-6">
+                        <label className="form-label small fw-semibold">Start date <span className="text-danger">*</span></label>
+                        <input type="date" className="form-control" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} required />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label small fw-semibold">End date <span className="text-danger">*</span></label>
+                        <input type="date" min={scheduleStartDate || undefined} className="form-control" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} required />
+                      </div>
                     </div>
+                    <div className="mt-3">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label small fw-semibold mb-0">Daily run times <span className="text-danger">*</span></label>
+                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setDailyRunTimes([...dailyRunTimes, ''])}>+ Add time</button>
+                      </div>
+                      <div className="d-flex flex-wrap gap-2">
+                        {dailyRunTimes.map((time, index) => (
+                          <div className="input-group" style={{ width: '170px' }} key={`time-slot-${index}`}>
+                            <input type="time" className="form-control" value={time} onChange={(e) => updateCustomTimeSlot(index, e.target.value)} required />
+                            {dailyRunTimes.length > 1 && (
+                              <button type="button" className="btn btn-outline-danger" aria-label={`Remove time ${index + 1}`} onClick={() => setDailyRunTimes(dailyRunTimes.filter((_, timeIndex) => timeIndex !== index))}>×</button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
-                    {/* Price is calculated from the selected plan */}
-                    <div className="col-12 col-md-6 mb-3">
+                  {/* Price is calculated from the selected plan */}
+                  <div className="mb-3">
                       <label className="form-label fw-semibold">💰 {planTab === 'custom' ? 'Custom Plan Total' : 'Package Price'} (₱) <span className="text-danger">*</span></label>
                       <input
                         type="number"
@@ -1977,7 +2042,6 @@ export default function App() {
                         required
                       />
                     </div>
-                  </div>
 
                   {/* Only the active plan tab can have a selected plan. */}
                   <div className="mb-3">
@@ -2016,32 +2080,7 @@ export default function App() {
                           </div>
                           <div className="col-12 col-md-6">
                             <label className="form-label small fw-semibold">Calculated schedule</label>
-                            <div className="form-control bg-white">{customPlanDays || 0} day(s) × {customTimeSlots.length} time slot(s) × {customRunsPerSlot || 0} runs</div>
-                          </div>
-                          <div className="col-12 col-md-6">
-                            <label className="form-label small fw-semibold">Start date <span className="text-danger">*</span></label>
-                            <input type="date" className="form-control" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} required />
-                          </div>
-                          <div className="col-12 col-md-6">
-                            <label className="form-label small fw-semibold">End date <span className="text-danger">*</span></label>
-                            <input type="date" min={customStartDate || undefined} className="form-control" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} required />
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <label className="form-label small fw-semibold mb-0">Daily run times <span className="text-danger">*</span></label>
-                            <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setCustomTimeSlots([...customTimeSlots, ''])}>+ Add time</button>
-                          </div>
-                          <div className="d-flex flex-wrap gap-2">
-                            {customTimeSlots.map((time, index) => (
-                              <div className="input-group" style={{ width: '170px' }} key={`time-slot-${index}`}>
-                                <input type="time" className="form-control" value={time} onChange={(e) => updateCustomTimeSlot(index, e.target.value)} required />
-                                {customTimeSlots.length > 1 && (
-                                  <button type="button" className="btn btn-outline-danger" aria-label={`Remove time ${index + 1}`} onClick={() => setCustomTimeSlots(customTimeSlots.filter((_, timeIndex) => timeIndex !== index))}>×</button>
-                                )}
-                              </div>
-                            ))}
+                            <div className="form-control bg-white">{customPlanDays || 0} day(s) × {dailyRunTimes.length} time slot(s) × {customRunsPerSlot || 0} runs</div>
                           </div>
                         </div>
                       </div>

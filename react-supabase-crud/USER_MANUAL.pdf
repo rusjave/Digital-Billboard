@@ -1,0 +1,183 @@
+%PDF-1.4
+%ÿÿÿÿ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Length 2965 >>
+stream
+BT
+50 790 Td
+/F2 18 Tf
+(KKK Group Digital Billboard - User Manual) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F2 13 Tf
+(Before you begin) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(Create an account and sign in. You will need a video file, your requested booking dates,) Tj
+0 -15 Td
+/F1 10 Tf
+(daily run times, and a payment reference number to submit a booking.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F2 13 Tf
+(Create a booking) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(1. Select Create New Task.) Tj
+0 -15 Td
+/F1 10 Tf
+(2. Enter a task title and upload the video advertisement.) Tj
+0 -15 Td
+/F1 10 Tf
+(3. Set the Start date, End date, and one or more Daily run times.) Tj
+0 -15 Td
+/F1 10 Tf
+(4. Select either a custom plan or a package plan.) Tj
+0 -15 Td
+/F1 10 Tf
+(5. Choose a payment method, enter the payment reference number, and tick the payment) Tj
+0 -15 Td
+/F1 10 Tf
+(confirmation box.) Tj
+0 -15 Td
+/F1 10 Tf
+(6. Select Submit to create the booking.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(The system checks that the requested date range is not already booked. If any date in) Tj
+0 -15 Td
+/F1 10 Tf
+(the range is unavailable, select different dates before submitting.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F2 13 Tf
+(Payment status - important) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(The payment options currently displayed in the application \(PayMongo, GCash, Maya, and) Tj
+0 -15 Td
+/F1 10 Tf
+(bank transfer\) are not yet connected to a live payment service. Selecting a method does) Tj
+0 -15 Td
+/F1 10 Tf
+(not process, verify, or transfer payment.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(For now, the payment reference number and confirmation checkbox are recorded with the) Tj
+0 -15 Td
+/F1 10 Tf
+(booking as a payment-submission record. Payment must be verified manually by an) Tj
+0 -15 Td
+/F1 10 Tf
+(administrator before it should be treated as completed.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(Do not rely on the application's "paid" confirmation alone as proof that a payment was) Tj
+0 -15 Td
+/F1 10 Tf
+(received.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F2 13 Tf
+(View a booking) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(Your bookings appear in the task list with their date range, daily run times, selected) Tj
+0 -15 Td
+/F1 10 Tf
+(plan, video link, and payment reference.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F2 13 Tf
+(Administrator guide) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(Administrators can use Bookings Calendar to see each booking on every day of its) Tj
+0 -15 Td
+/F1 10 Tf
+(reserved date range. Select a calendar day to view the customer, plan, price, schedule,) Tj
+0 -15 Td
+/F1 10 Tf
+(and daily run times.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+/F1 10 Tf
+(Administrators should manually confirm payment using the payment provider or bank before) Tj
+0 -15 Td
+/F1 10 Tf
+(scheduling the advertisement for delivery.) Tj
+0 -15 Td
+/F1 10 Tf
+() Tj
+0 -15 Td
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000003283 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3419
+%%EOF
