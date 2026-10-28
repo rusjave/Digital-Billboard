@@ -1437,7 +1437,7 @@ export default function App() {
                                 onChange={() => adminToggleComplete(t)}
                               />
                               <span className="small text-muted ms-1">
-                                {t.is_completed ? 'Done' : 'Pending'}
+                                {t.is_completed ? 'Uploaded completed' : 'For review'}
                               </span>
                             </div>
                           </td>
@@ -1548,10 +1548,10 @@ export default function App() {
                                 className="form-check-input me-1"
                                 checked={todo.is_completed}
                                 onChange={() => toggleComplete(todo)}
-                                title="Mark completed"
+                                title="Mark as uploaded completed"
                               />
                               <span className={`badge ${todo.is_completed ? 'bg-success' : 'bg-secondary'}`} style={{ fontSize: '0.65rem' }}>
-                                {todo.is_completed ? 'Done' : 'Pending'}
+                                {todo.is_completed ? 'Uploaded completed' : 'For review'}
                               </span>
                             </td>
 
